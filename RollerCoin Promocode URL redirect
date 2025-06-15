@@ -18,6 +18,17 @@ root = tk.Tk()
 root.title("Rollercoin Promo Launcher")
 root.resizable(True, False)  # Prevent resizing
 
+# Load and apply the window icon
+icon = None
+image_path = resource_path("rollercoinICON.png")
+if os.path.exists(image_path):
+    icon = tk.PhotoImage(file=image_path)
+    root.iconphoto(False, icon)
+
+ico_path = resource_path("rollercoinICON.ico")
+if os.path.exists(ico_path):
+    root.iconbitmap(ico_path)
+
 # Always on Top Configuration
 always_on_top = True
 root.attributes('-topmost', always_on_top)
@@ -76,7 +87,10 @@ def show_popup():
     popup.attributes('-topmost', True)
     popup.resizable(False, False)
     popup.bind("<Escape>", close_popup)  
-    popup.focus_force()  
+    popup.focus_force()
+
+    if icon:
+        popup.iconphoto(False, icon)
 
     # Add explanatory labels
     messages = [
@@ -120,16 +134,6 @@ def exit_app(event=None):
         root.destroy()
 
 root.bind("<Escape>", exit_app)  
-
-# Load and apply the window icon
-image_path = resource_path("rollercoinICON.png")
-icon = ImageTk.PhotoImage(Image.open(image_path)) if os.path.exists(image_path) else None
-if icon:
-    root.iconphoto(False, icon)
-
-ico_path = resource_path("rollercoinICON.ico")
-if os.path.exists(ico_path):
-    root.iconbitmap(ico_path)
 
 # Entry Field for Promo Codes
 input_frame = tk.Frame(root)
