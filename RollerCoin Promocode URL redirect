@@ -13,27 +13,22 @@ def resource_path(relative_path):
     base_path = getattr(sys, "_MEIPASS", os.path.abspath("."))
     return os.path.join(base_path, relative_path)
 
-# Initialize main window and hide immediately to avoid flicker on startup
 root = tk.Tk()
 root.withdraw()
 
 root.title("Rollercoin Promo Launcher")
 root.resizable(True, False)  # Allow only horizontal resizing
 
-# Minimum size to prevent shrinking past buttons
 min_width, fixed_height = 650, 60
 root.minsize(min_width, fixed_height)
 
-# Load and set icon if exists
 ico_path = resource_path("rcicon.ico")
 if os.path.exists(ico_path):
     root.iconbitmap(ico_path)
 
-# Always-on-top by default
 always_on_top = True
 root.attributes('-topmost', always_on_top)
 
-# Placeholder text for input field
 default_text = "Please Input the Code here"
 
 def set_placeholder():
@@ -63,24 +58,21 @@ popup = None
 def show_popup():
     global popup
     if popup and popup.winfo_exists():
-        popup.destroy()
-        popup = None
-        root.resizable(True, False)  # Restore resizability
+        # Popup already open, do nothing
         return
-
-    # Temporarily prevent resizing to avoid redraw glitch
-    root.resizable(False, False)
 
     root.update_idletasks()
     root_x, root_y, root_w, root_h = root.winfo_x(), root.winfo_y(), root.winfo_width(), root.winfo_height()
 
     popup = tk.Toplevel(root)
+    popup.withdraw()
+
     popup.title("How To Use")
     popup.attributes('-topmost', True)
     popup.transient(root)
     popup.resizable(False, False)
+    popup.protocol("WM_DELETE_WINDOW", close_popup)
     popup.bind("<Escape>", close_popup)
-    popup.focus_force()
 
     ico_path = resource_path("rcicon.ico")
     if os.path.exists(ico_path):
@@ -99,12 +91,12 @@ def show_popup():
         ('Made by 00 with the help of ChatGPT + Copilot', ("Arial", 8, "italic"), "gray", "right"),
     ]
 
-    container = tk.Frame(popup, padx=15, pady=10)
+    container = tk.Frame(popup, padx=15, pady=5)
     container.pack(fill="both", expand=True)
 
     for text, font, fg, justify in messages[:-2]:
         lbl = tk.Label(container, text=text, font=font, fg=fg, justify=justify, anchor="center")
-        lbl.pack(anchor="center", pady=2)
+        lbl.pack(anchor="center", pady=0)
 
     spacer = tk.Label(container, text="", height=1)
     spacer.pack()
@@ -126,23 +118,29 @@ def show_popup():
     popup.bind("<B1-Motion>", do_drag)
 
     popup.update_idletasks()
-    width = container.winfo_reqwidth() + 30
-    height = container.winfo_reqheight() + 20
+    width = container.winfo_reqwidth()
+    height = container.winfo_reqheight()
     popup.geometry(f"{width}x{height}+{root_x + (root_w - width) // 2}+{root_y + (root_h - height) // 2}")
+
+    # Show popup immediately to avoid flicker
+    def delayed_show():
+        if popup and popup.winfo_exists():
+            popup.deiconify()
+            popup.focus_force()
+    popup.after(10, delayed_show)
 
 def close_popup(event=None):
     global popup
     if popup and popup.winfo_exists():
         popup.destroy()
         popup = None
-        root.resizable(True, False)  # Re-enable resizing horizontally
+        root.focus_force()
 
 def exit_app(event=None):
     root.destroy()
 
 root.bind("<Escape>", exit_app)
 
-# Layout setup
 input_frame = tk.Frame(root)
 input_frame.pack(padx=20, pady=8, fill="x")
 
