@@ -15,10 +15,10 @@ def resource_path(relative_path):
 
 # GUI Setup
 root = tk.Tk()
-root.title("Rollercoin Promo Launcher")
+root.title("Rollercoin Promo Launcher")  # Main window title
 root.resizable(True, False)  # Prevent resizing
 
-# Load and apply the window icon
+# Load and apply the window icon (for taskbar/title area)
 icon = None
 image_path = resource_path("rollercoinICON.png")
 if os.path.exists(image_path):
@@ -83,7 +83,7 @@ def show_popup():
 
     # Create the popup
     popup = tk.Toplevel(root)
-    popup.title("How To Use")
+    popup.title("How To Use")  # Popup title (you can set any title here)
     popup.attributes('-topmost', True)
     popup.resizable(False, False)
     popup.bind("<Escape>", close_popup)  
@@ -91,6 +91,10 @@ def show_popup():
 
     if icon:
         popup.iconphoto(False, icon)
+
+    popup_ico_path = resource_path("rollercoinICON.ico")
+    if os.path.exists(popup_ico_path):
+        popup.iconbitmap(popup_ico_path)
 
     # Add explanatory labels
     messages = [
