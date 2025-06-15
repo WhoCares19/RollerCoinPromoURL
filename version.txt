@@ -1,0 +1,31 @@
+# UTF-8
+#
+# For more info: https://github.com/pyinstaller/pyinstaller/wiki/Recipe-Windows-File-Version-Resource
+
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(2, 1, 0, 0),
+    prodvers=(2, 1, 0, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x4,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+    ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        '040904B0',
+        [StringStruct('CompanyName', 'Your Company'),
+         StringStruct('FileDescription', 'Rollercoin Promo Launcher'),
+         StringStruct('FileVersion', '2.1.0.0'),
+         StringStruct('InternalName', 'RollerPromoUrl'),
+         StringStruct('LegalCopyright', 'Made by 00, 2025'),
+         StringStruct('OriginalFilename', 'RollerPromoUrl.exe'),
+         StringStruct('ProductName', 'Rollercoin Promo Launcher'),
+         StringStruct('ProductVersion', '2.1.0.0')])
+    ]),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)
