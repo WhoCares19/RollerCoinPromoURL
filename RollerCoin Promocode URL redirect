@@ -9,106 +9,83 @@ BASE_URL = "https://rollercoin.com/sign-in?promocode="
 def resource_path(relative_path):
     """
     Get absolute path to resource, works for development and PyInstaller bundled executables.
-
-    Args:
-        relative_path (str): Relative path to resource file.
-
-    Returns:
-        str: Absolute path to resource.
     """
     base_path = getattr(sys, "_MEIPASS", os.path.abspath("."))
     return os.path.join(base_path, relative_path)
 
 # Initialize main window and hide immediately to avoid flicker on startup
 root = tk.Tk()
-root.withdraw()  # Hide window until fully configured
+root.withdraw()
 
-root.title("Rollercoin Promo Launcher")  # Set window title
-root.resizable(True, False)  # Allow horizontal resizing only
+root.title("Rollercoin Promo Launcher")
+root.resizable(True, False)  # Allow only horizontal resizing
 
-# Load and set window icon, if available
+# Minimum size to prevent shrinking past buttons
+min_width, fixed_height = 650, 60
+root.minsize(min_width, fixed_height)
+
+# Load and set icon if exists
 ico_path = resource_path("rcicon.ico")
 if os.path.exists(ico_path):
     root.iconbitmap(ico_path)
 
-# Configure window to stay always on top by default
+# Always-on-top by default
 always_on_top = True
 root.attributes('-topmost', always_on_top)
 
-# Placeholder text for entry box
+# Placeholder text for input field
 default_text = "Please Input the Code here"
 
 def set_placeholder():
-    """
-    Set placeholder text in the entry widget with a greyish color.
-    """
     entry.delete(0, tk.END)
     entry.insert(0, default_text)
     entry.config(fg="#C8A2C8")
 
 def clear_placeholder(event=None):
-    """
-    Clear placeholder text when entry gains focus, if placeholder is currently shown.
-    """
     if entry.get() == default_text:
         entry.delete(0, tk.END)
         entry.config(fg="black")
 
 def open_url(event=None):
-    """
-    Open the constructed Rollercoin promo URL in the default web browser.
-
-    Args:
-        event: Optional Tkinter event.
-    """
     code = entry.get().strip()
     if code and code != default_text:
         webbrowser.open(BASE_URL + code)
 
 def toggle_always_on_top():
-    """
-    Toggle the window's always-on-top state and update the toggle button's appearance.
-    """
     global always_on_top
     always_on_top = not always_on_top
     root.attributes('-topmost', always_on_top)
-    if always_on_top:
-        toggle_btn.config(text="On Top", fg="blue", state="normal")
-    else:
-        toggle_btn.config(text="Not On Top", fg="red", state="normal")
+    toggle_btn.config(text="On Top" if always_on_top else "Not On Top",
+                      fg="blue" if always_on_top else "red")
 
-# Popup window variable
 popup = None
 
 def show_popup():
-    """
-    Show a popup window with instructions on how to use the app.
-    If the popup is already open, it will close it instead.
-    """
     global popup
     if popup and popup.winfo_exists():
         popup.destroy()
         popup = None
+        root.resizable(True, False)  # Restore resizability
         return
-    
-    # Get main window position and size for centering the popup
+
+    # Temporarily prevent resizing to avoid redraw glitch
+    root.resizable(False, False)
+
     root.update_idletasks()
     root_x, root_y, root_w, root_h = root.winfo_x(), root.winfo_y(), root.winfo_width(), root.winfo_height()
 
-    # Create the popup window
     popup = tk.Toplevel(root)
     popup.title("How To Use")
     popup.attributes('-topmost', True)
+    popup.transient(root)
     popup.resizable(False, False)
     popup.bind("<Escape>", close_popup)
     popup.focus_force()
 
-    # Set popup icon if available
     ico_path = resource_path("rcicon.ico")
     if os.path.exists(ico_path):
         popup.iconbitmap(ico_path)
-        
-    # Instruction messages as tuples: (text, font, fg, justify)
+
     messages = [
         ('This app puts the CODE after:', ("Arial", 12), "black", "center"),
         ('"https://rollercoin.com/sign-in?promocode="', ("Arial", 12, "italic"), "blue", "center"),
@@ -118,30 +95,24 @@ def show_popup():
         ('Sometimes the promocode might take a few refreshes to show up for you.', ("Arial", 12), "black", "center"),
         ('This is not an app bug', ("Arial", 12, "italic"), "red", "center"),
         ('No responsibility is taken if the claim popup didn\'t show and you were unable to claim the prize.', ("Arial", 12, "bold"), "red", "center"),
-        # Smaller, italic, right aligned lines stacked below main text:
         ('To be used for RollerCoin PromoCodes (not the whole links)', ("Arial", 8, "italic"), "black", "right"),
         ('Made by 00 with the help of ChatGPT + Copilot', ("Arial", 8, "italic"), "gray", "right"),
     ]
 
-    # Create container frame with some padding
     container = tk.Frame(popup, padx=15, pady=10)
     container.pack(fill="both", expand=True)
 
-    # Add main instruction labels first (all except last two)
     for text, font, fg, justify in messages[:-2]:
         lbl = tk.Label(container, text=text, font=font, fg=fg, justify=justify, anchor="center")
         lbl.pack(anchor="center", pady=2)
 
-    # Add a spacer before the last two lines
     spacer = tk.Label(container, text="", height=1)
     spacer.pack()
 
-    # Add the last two lines right aligned at bottom stacked vertically
     for text, font, fg, justify in messages[-2:]:
         lbl = tk.Label(container, text=text, font=font, fg=fg, justify=justify, anchor="e")
         lbl.pack(anchor="e", fill="x")
 
-    # Make the entire popup draggable from anywhere inside it
     def start_drag(event):
         popup._drag_start_x = event.x
         popup._drag_start_y = event.y
@@ -154,90 +125,60 @@ def show_popup():
     popup.bind("<Button-1>", start_drag)
     popup.bind("<B1-Motion>", do_drag)
 
-    # Calculate popup size and center relative to main window
     popup.update_idletasks()
     width = container.winfo_reqwidth() + 30
     height = container.winfo_reqheight() + 20
     popup.geometry(f"{width}x{height}+{root_x + (root_w - width) // 2}+{root_y + (root_h - height) // 2}")
 
 def close_popup(event=None):
-    """
-    Close the popup window if it exists.
-    """
     global popup
     if popup and popup.winfo_exists():
         popup.destroy()
         popup = None
+        root.resizable(True, False)  # Re-enable resizing horizontally
 
 def exit_app(event=None):
-    """
-    Exit the main application.
-    """
     root.destroy()
 
-# Bind Escape key to close the app
 root.bind("<Escape>", exit_app)
 
-# --- Main GUI layout ---
-
-# Frame for input and buttons
+# Layout setup
 input_frame = tk.Frame(root)
 input_frame.pack(padx=20, pady=8, fill="x")
 
-# Always on top toggle button
 toggle_btn = tk.Button(input_frame, text="On Top", font=("Arial", 12), fg="blue",
                        width=10, height=1, command=toggle_always_on_top)
 toggle_btn.pack(side="left", padx=10)
 
-# Entry box for promo code input
 entry = tk.Entry(input_frame, font=("Arial", 18), bd=6, fg="purple", justify="center")
 entry.pack(side="left", expand=True, fill="x")
 
-# Help button to show popup
 question_btn = tk.Button(input_frame, text="❓", font=("Arial", 12), fg="blue", width=3, command=show_popup)
 question_btn.pack(side="right", padx=10)
 
-# Bindings for entry field
-entry.bind("<FocusIn>", clear_placeholder)  # Clear placeholder on focus
-entry.bind("<Return>", open_url)            # Open URL on Enter key
+entry.bind("<FocusIn>", clear_placeholder)
+entry.bind("<Return>", open_url)
 
 def on_window_click(event):
-    """
-    When clicking anywhere in the main window except the entry widget,
-    restore placeholder text if entry is empty or default,
-    and remove cursor focus from entry.
-    Only acts when clicking elements belonging to the main window, not popups.
-    """
     widget = event.widget
-    # Only do this if the widget is in the main window, not elsewhere (like the popup)
     if widget.winfo_toplevel() == root and widget != entry and (entry.get().strip() == "" or entry.get() == default_text):
         set_placeholder()
-        root.focus()  # Remove blinking cursor from entry
+        root.focus()
 
-# Listen for all left mouse clicks inside the window
 root.bind_all("<Button-1>", on_window_click, add="+")
 
 def on_focus_out(event):
-    """
-    Restore placeholder text if entry is empty on losing focus.
-    """
     if entry.get().strip() == "":
         set_placeholder()
 
 entry.bind("<FocusOut>", on_focus_out)
 
-# Set initial placeholder text
 set_placeholder()
 
-# Set fixed window size and center on screen
-fixed_width, fixed_height = 650, 60
 screen_width, screen_height = root.winfo_screenwidth(), root.winfo_screenheight()
-x = (screen_width // 2) - (fixed_width // 2)
+x = (screen_width // 2) - (min_width // 2)
 y = (screen_height // 2) - (fixed_height // 2)
-root.geometry(f"{fixed_width}x{fixed_height}+{x}+{y}")
+root.geometry(f"{min_width}x{fixed_height}+{x}+{y}")
 
-# Now show the main window after all setup to prevent flicker
 root.deiconify()
-
-# Start the GUI event loop
 root.mainloop()
