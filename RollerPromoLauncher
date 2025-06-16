@@ -7,9 +7,6 @@ import webbrowser
 BASE_URL = "https://rollercoin.com/sign-in?promocode="
 
 def resource_path(relative_path):
-    """
-    Get absolute path to resource, works for development and PyInstaller bundled executables.
-    """
     base_path = getattr(sys, "_MEIPASS", os.path.abspath("."))
     return os.path.join(base_path, relative_path)
 
@@ -39,7 +36,9 @@ def set_placeholder():
 def clear_placeholder(event=None):
     if entry.get() == default_text:
         entry.delete(0, tk.END)
+    if entry.get().strip() == "":
         entry.config(fg="black")
+
 
 def open_url(event=None):
     code = entry.get().strip()
@@ -58,7 +57,6 @@ popup = None
 def show_popup():
     global popup
     if popup and popup.winfo_exists():
-        # Popup already open, do nothing
         return
 
     root.update_idletasks()
@@ -122,7 +120,6 @@ def show_popup():
     height = container.winfo_reqheight()
     popup.geometry(f"{width}x{height}+{root_x + (root_w - width) // 2}+{root_y + (root_h - height) // 2}")
 
-    # Show popup immediately to avoid flicker
     def delayed_show():
         if popup and popup.winfo_exists():
             popup.deiconify()
@@ -170,6 +167,24 @@ def on_focus_out(event):
         set_placeholder()
 
 entry.bind("<FocusOut>", on_focus_out)
+
+# Right-click context menu for entry
+context_menu = tk.Menu(entry, tearoff=0)
+context_menu.add_command(label="Cut", command=lambda: entry.event_generate("<<Cut>>"))
+context_menu.add_command(label="Copy", command=lambda: entry.event_generate("<<Copy>>"))
+context_menu.add_command(label="Paste", command=lambda: entry.event_generate("<<Paste>>"))
+context_menu.add_command(label="Delete", command=lambda: entry.delete(0, tk.END))  # ← added line
+context_menu.add_separator()
+context_menu.add_command(label="Select All", command=lambda: entry.select_range(0, tk.END))
+
+def show_context_menu(event):
+    try:
+        context_menu.tk_popup(event.x_root, event.y_root)
+    finally:
+        context_menu.grab_release()
+
+entry.bind("<Button-3>", show_context_menu)
+
 
 set_placeholder()
 
